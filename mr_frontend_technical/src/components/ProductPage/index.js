@@ -6,6 +6,7 @@ const ProductPage = ({ cartTotal, addProductToCart }) => {
   const [selectedSize, setSelectedSize] = useState("");
   const [productDetail, setProductDetail] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [purchaseError, setPurchaseError] = useState(false);
 
   useEffect(() => {
     fetch(
@@ -24,36 +25,49 @@ const ProductPage = ({ cartTotal, addProductToCart }) => {
       );
   }, []);
 
-  const updateSelectedSize = (e) => {
-    return setSelectedSize(e.target.value);
-  };
-
-  const SizeOption = ({ label, keyId, updateSelectedSize }) => {
+  const SizeOption = ({ label, keyId }) => {
     return (
       <div key={keyId}>
         <input
+          className="hidden peer"
           type="radio"
-          id="html"
-          name="fav_language"
+          id={label}
           value={label}
-          onChange={updateSelectedSize}
+          name="size"
+          onChange={() => setSelectedSize(label)}
         />
-        <label htmlFor="S">{label}</label>
+        <label
+          className="border-2 border-gray-300 peer-checked:border-primary-100 px-4 py-3 mr-1 text-xs cursor-pointer"
+          htmlFor={label}
+        >
+          {label}
+        </label>
       </div>
     );
   };
 
   const addItem = (e) => {
     e.preventDefault();
-    const item = {
-      size: selectedSize,
-      title: productDetail.title,
-    };
-    addProductToCart(item);
+    if (selectedSize !== "") {
+      const item = {
+        size: selectedSize,
+        title: productDetail.title,
+        price: productDetail.price,
+        imageURL: productDetail.imageURL,
+      };
+      addProductToCart(item);
+    } else {
+      setPurchaseError(true);
+    }
+    setSelectedSize("");
   };
 
   return (
-    <Layout cartTotal={cartTotal}>
+    <Layout
+      cartTotal={cartTotal}
+      purchaseError={purchaseError}
+      setPurchaseError={setPurchaseError}
+    >
       {isLoading ? (
         <p>Loading Product</p>
       ) : (
@@ -76,19 +90,15 @@ const ProductPage = ({ cartTotal, addProductToCart }) => {
             <form className="mt-4" onSubmit={addItem}>
               <label className="text-sm text-primary-200 uppercase font-bold tracking-wider">
                 Size<span className="text-red-100">*</span>
-                <span className="font-bold ml-4 text-primary-100">S</span>
+                <span className="font-bold ml-4 text-primary-100">
+                  {selectedSize}
+                </span>
               </label>
-              <div>
+              <div className="flex mt-7">
                 {productDetail.sizeOptions.length > 0 ? (
-                  productDetail.sizeOptions.map((size) => {
-                    return (
-                      <SizeOption
-                        keyId={size.id}
-                        label={size.label}
-                        updateSelectedSize={updateSelectedSize}
-                      />
-                    );
-                  })
+                  productDetail.sizeOptions.map((size) => (
+                    <SizeOption keyId={size.id} label={size.label} />
+                  ))
                 ) : (
                   <p>No Size</p>
                 )}
